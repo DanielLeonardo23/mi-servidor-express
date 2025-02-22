@@ -1,11 +1,11 @@
 const express = require('express');
-const cors = require('cors');  // Importar CORS
+const cors = require('cors');  // Importamos CORS
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const path = require('path');
 const app = express();
 
-// Configurar CORS para permitir solicitudes desde cualquier origen
+// Configuración de CORS para permitir solicitudes de cualquier origen
 app.use(cors());
 
 // Configuración de Cloudinary
@@ -15,60 +15,36 @@ cloudinary.config({
   api_secret: 'POaaiNhqAICv8t91AXXD-ABx-D4',  // Tu API Secret
 });
 
-// Configuración de Multer para manejar los archivos subidos
-const storage = multer.memoryStorage(); // Guardar los archivos en memoria
+// Configuración de Multer para manejar la carga de archivos
+const storage = multer.memoryStorage();  // Almacenamos en memoria
 const upload = multer({ storage: storage });
 
-// Lista para almacenar los links de las imágenes subidas
-let uploadedImages = [];
-
-// Ruta principal que muestra el formulario para cargar imágenes
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html')); // Sirve el archivo HTML
-});
-
-// Ruta para manejar la carga de imágenes
+// Ruta para subir imágenes
 app.post('/upload', upload.single('image'), (req, res) => {
-  try {
-    // Verifica si no se recibió un archivo
-    if (!req.file) {
-      return res.status(400).json({ error: 'No se ha recibido una imagen' });
-    }
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded.' });
+  }
 
-    // Sube la imagen a Cloudinary
-    cloudinary.uploader.upload_stream(
-      { resource_type: 'auto', folder: 'uploads' },  // 'auto' detecta automáticamente el tipo de archivo
-      (error, result) => {
-        if (error) {
-          return res.status(500).json({ error: 'Error al subir la imagen a Cloudinary' });
-        }
-
-        // Obtén la URL de la imagen subida
-        const imageUrl = result.secure_url;
-
-        // Almacenar el link de la imagen
-        uploadedImages.push(imageUrl);
-
-        return res.status(200).json({ message: 'Imagen subida correctamente', image_url: imageUrl });
+  // Subir la imagen a Cloudinary
+  cloudinary.uploader.upload_stream(
+    { resource_type: 'auto' },  // Detecta el tipo de archivo automáticamente
+    (error, result) => {
+      if (error) {
+        return res.status(500).json({ error: 'Error uploading image.' });
       }
-    ).end(req.file.buffer);  // Usamos el archivo en memoria
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
-  }
+
+      // Respondemos con la URL de la imagen subida
+      res.json({
+        message: 'Image uploaded successfully',
+        filename: result.public_id,
+        url: result.secure_url,  // URL de la imagen subida
+      });
+    }
+  ).end(req.file.buffer);  // Usamos el archivo desde la memoria
 });
 
-// Ruta para ver las imágenes subidas
-app.get('/images', (req, res) => {
-  try {
-    if (uploadedImages.length > 0) {
-      return res.json({ image_urls: uploadedImages });
-    } else {
-      return res.json({ message: 'No hay imágenes subidas.' });
-    }
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
-  }
-});
+// Servir archivos estáticos (el formulario HTML)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Iniciar el servidor
 const PORT = process.env.PORT || 8000;
