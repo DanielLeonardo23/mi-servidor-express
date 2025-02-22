@@ -1,8 +1,12 @@
 const express = require('express');
+const cors = require('cors');  // Importar CORS
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const path = require('path');
 const app = express();
+
+// Configurar CORS para permitir solicitudes desde cualquier origen
+app.use(cors());
 
 // Configuración de Cloudinary
 cloudinary.config({
@@ -12,7 +16,7 @@ cloudinary.config({
 });
 
 // Configuración de Multer para manejar los archivos subidos
-const storage = multer.memoryStorage(); // Guardar los archivos en memoria (sin necesidad de usar disco)
+const storage = multer.memoryStorage(); // Guardar los archivos en memoria
 const upload = multer({ storage: storage });
 
 // Lista para almacenar los links de las imágenes subidas
