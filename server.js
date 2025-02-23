@@ -25,9 +25,12 @@ app.post('/upload', upload.single('image'), (req, res) => {
     return res.status(400).json({ message: 'No file uploaded.' });
   }
 
-  // Subir la imagen a Cloudinary
+  // Subir la imagen a Cloudinary y especificar una carpeta
   cloudinary.uploader.upload_stream(
-    { resource_type: 'auto' },  // Detecta el tipo de archivo automáticamente
+    { 
+      resource_type: 'auto',  // Detecta automáticamente el tipo de archivo (imagen, video, etc.)
+      folder: 'uploads/',  // Especificamos que queremos guardar en la carpeta "uploads"
+    },
     (error, result) => {
       if (error) {
         return res.status(500).json({ error: 'Error uploading image.' });
@@ -36,7 +39,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
       // Respondemos con la URL de la imagen subida
       res.json({
         message: 'Image uploaded successfully',
-        filename: result.public_id,
+        filename: result.public_id,  // public_id de la imagen subida
         url: result.secure_url,  // URL de la imagen subida
       });
     }
